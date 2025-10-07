@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Companion</title>
+    <style>
+        :root {
+            --primary-bg: #343541;
+            --secondary-bg: #444654;
+            --sidebar-bg: #202123;
+            --text-primary: #ececf1;
+            --text-secondary: #8e8ea0;
+            --accent-color: #10a37f;
+            --border-color: #4d4d4f;
+            --user-message-bg: #343541;
+            --assistant-message-bg: #444654;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .new-chat-btn {
+            margin: 8px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: transparent;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .new-chat-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .history-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .history-item {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .history-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-footer {
+            padding: 12px;
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+        }
+
+        .header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .model-info {
+            position: absolute;
+            right: 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .message {
+            display: flex;
+            gap: 24px;
+            max-width: 768px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            background-color: #5436DA;
+        }
+
+        .assistant-avatar {
+            background-color: var(--accent-color);
+        }
+
+        .message-content {
+            flex: 1;
+            padding-top: 4px;
+            line-height: 1.5;
+        }
+
+        .user-message {
+            background-color: var(--user-message-bg);
+        }
+
+        .assistant-message {
+            background-color: var(--assistant-message-bg);
+        }
+
+        .input-container {
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .input-wrapper {
+            max-width: 768px;
+            width: 100%;
+            position: relative;
+        }
+
+        #user-input {
+            width: 100%;
+            padding: 12px 48px 12px 16px;
+            background-color: #40414f;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 16px;
+            resize: none;
+            max-height: 200px;
+            min-height: 56px;
+            line-height: 1.5;
+        }
+
+        #user-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        #send-btn {
+            position: absolute;
+            right: 12px;
+            bottom: 12px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        #send-btn:hover {
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        #send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 16px 0;
+            max-width: 768px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-secondary);
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .welcome-message {
+            max-width: 768px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .welcome-message h2 {
+            font-size: 32px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .welcome-message p {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin-bottom: 24px;
+        }
+
+        .suggestion-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 24px;
+        }
+
+        .suggestion-chip {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .suggestion-chip:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .crisis-resources {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+        }
+
+        #crisis-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .resources-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .resources-content {
+            background: var(--secondary-bg);
+            padding: 24px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .resource-item {
+            margin-bottom: 12px;
+            padding: 12px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+        }
+
+        .resource-item strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .disclaimer {
+            margin-top: 16px;
+            padding: 12px;
+            background-color: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 6px;
+            font-size: 12px;
+            color: #ffc107;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            
+            .message {
+                gap: 12px;
+            }
+            
+            .chat-container {
+                padding: 16px;
+            }
+            
+            .input-container {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <button class="new-chat-btn" id="new-chat-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            New chat
+        </button>
+        <div class="history-container" id="history-container">
+            <!-- Chat history will be populated here -->
+        </div>
+        <div class="sidebar-footer">
+            <p>Mental Health Companion</p>
+            <p>Using Gemini Pro • Free</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="header">
+            <h1>Mental Health Companion</h1>
+            <div class="model-info">Gemini Pro</div>
+        </div>
+
+        <div class="chat-container" id="chat-container">
+            <div class="welcome-message">
+                <h2>How can I help you today?</h2>
+                <p>I'm here to listen and provide supportive conversation. Feel free to share what's on your mind.</p>
+                <div class="suggestion-chips">
+                    <div class="suggestion-chip" data-prompt="I'm feeling anxious today">I'm feeling anxious today</div>
+                    <div class="suggestion-chip" data-prompt="I'm having trouble sleeping">I'm having trouble sleeping</div>
+                    <div class="suggestion-chip" data-prompt="I'm feeling overwhelmed">I'm feeling overwhelmed</div>
+                    <div class="suggestion-chip" data-prompt="Can you suggest some coping strategies?">Coping strategies</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typing-indicator">
+            <div class="typing-dots">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div class="input-wrapper">
+                <textarea id="user-input" placeholder="Message Mental Health Companion..." rows="1"></textarea>
+                <button id="send-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="crisis-resources">
+            <button id="crisis-btn">Crisis Resources</button>
+        </div>
+    </div>
+
+    <!-- Crisis Resources Modal -->
+    <div class="resources-modal" id="resources-modal">
+        <div class="resources-content">
+            <div class="modal-header">
+                <h2>Crisis Resources</h2>
+                <button class="close-btn" id="close-modal">&times;</button>
+            </div>
+            <div id="resources-list">
+                <div class="resource-item">
+                    <strong>Emergency Services</strong>
+                    <span>911 (or your local emergency number)</span>
+                </div>
+                <div class="resource-item">
+                    <strong>Crisis Text Line</strong>
+                    <span>Text HOME to 741741</span>
+                </div>
+                <div class="resource-item">
+                    <strong>988 Suicide & Crisis Lifeline</strong>
+                    <span>Call or text 988</span>
+                </div>
+                <div class="resource-item">
+                    <strong>The Trevor Project (LGBTQ+)</strong>
+                    <span>1-866-488-7386</span>
+                </div>
+                <div class="resource-item">
+                    <strong>Veterans Crisis Line</strong>
+                    <span>1-800-273-8255, Press 1</span>
+                </div>
+            </div>
+            <div class="disclaimer">
+                <strong>Important:</strong> This is an AI companion for general support, not a replacement for professional mental healthcare. In crisis situations, please contact emergency services.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class MentalHealthChat {
+            constructor() {
+                this.chatContainer = document.getElementById('chat-container');
+                this.userInput = document.getElementById('user-input');
+                this.sendBtn = document.getElementById('send-btn');
+                this.typingIndicator = document.getElementById('typing-indicator');
+                this.crisisBtn = document.getElementById('crisis-btn');
+                this.resourcesModal = document.getElementById('resources-modal');
+                this.closeModal = document.getElementById('close-modal');
+                this.newChatBtn = document.getElementById('new-chat-btn');
+                this.historyContainer = document.getElementById('history-container');
+                this.suggestionChips = document.querySelectorAll('.suggestion-chip');
+                
+                this.conversationHistory = [];
+                this.currentChatId = this.generateChatId();
+                
+                this.initializeEventListeners();
+                this.autoResizeTextarea();
+            }
+            
+            generateChatId() {
+                return 'chat_' + Date.now();
+            }
+            
+            initializeEventListeners() {
+                this.sendBtn.addEventListener('click', () => this.sendMessage());
+                this.userInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+                
+                this.crisisBtn.addEventListener('click', () => this.showResources());
+                this.closeModal.addEventListener('click', () => this.hideResources());
+                
+                // Close modal when clicking outside
+                this.resourcesModal.addEventListener('click', (e) => {
+                    if (e.target === this.resourcesModal) {
+                        this.hideResources();
+                    }
+                });
+                
+                // New chat button
+                this.newChatBtn.addEventListener('click', () => this.startNewChat());
+                
+                // Suggestion chips
+                this.suggestionChips.forEach(chip => {
+                    chip.addEventListener('click', () => {
+                        this.userInput.value = chip.getAttribute('data-prompt');
+                        this.sendMessage();
+                    });
+                });
+                
+                // Auto-resize textarea
+                this.userInput.addEventListener('input', () => this.autoResizeTextarea());
+            }
+            
+            autoResizeTextarea() {
+                this.userInput.style.height = 'auto';
+                this.userInput.style.height = Math.min(this.userInput.scrollHeight, 200) + 'px';
+            }
+            
+            async sendMessage() {
+                const message = this.userInput.value.trim();
+                if (!message) return;
+                
+                // Hide welcome message on first user message
+                const welcomeMessage = document.querySelector('.welcome-message');
+                if (welcomeMessage) {
+                    welcomeMessage.style.display = 'none';
+                }
+                
+                // Add user message to chat
+                this.addMessage(message, 'user');
+                this.userInput.value = '';
+                this.autoResizeTextarea();
+                this.setLoadingState(true);
+                
+                try {
+                    const response = await fetch('/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            message: message,
+                            history: this.conversationHistory
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.status === 'success') {
+                        this.addMessage(data.response, 'assistant');
+                        // Update conversation history
+                        this.conversationHistory.push({
+                            user: message,
+                            assistant: data.response
+                        });
+                        
+                        // Update chat history in sidebar
+                        this.updateChatHistory(message);
+                    } else {
+                        throw new Error(data.error || 'Unknown error');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+                } finally {
+                    this.setLoadingState(false);
+                }
+            }
+            
+            addMessage(text, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-message`;
+                
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = `avatar ${sender}-avatar`;
+                avatarDiv.textContent = sender === 'user' ? 'U' : 'MH';
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.textContent = text;
+                
+                messageDiv.appendChild(avatarDiv);
+                messageDiv.appendChild(contentDiv);
+                this.chatContainer.appendChild(messageDiv);
+                
+                // Scroll to bottom
+                this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+            }
+            
+            setLoadingState(loading) {
+                this.sendBtn.disabled = loading;
+                this.typingIndicator.style.display = loading ? 'block' : 'none';
+                
+                if (loading) {
+                    this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+                }
+            }
+            
+            showResources() {
+                this.resourcesModal.style.display = 'flex';
+            }
+            
+            hideResources() {
+                this.resourcesModal.style.display = 'none';
+            }
+            
+            startNewChat() {
+                // Clear current chat
+                this.chatContainer.innerHTML = '';
+                this.conversationHistory = [];
+                this.currentChatId = this.generateChatId();
+                
+                // Show welcome message
+                const welcomeMessage = document.createElement('div');
+                welcomeMessage.className = 'welcome-message';
+                welcomeMessage.innerHTML = `
+                    <h2>How can I help you today?</h2>
+                    <p>I'm here to listen and provide supportive conversation. Feel free to share what's on your mind.</p>
+                    <div class="suggestion-chips">
+                        <div class="suggestion-chip" data-prompt="I'm feeling anxious today">I'm feeling anxious today</div>
+                        <div class="suggestion-chip" data-prompt="I'm having trouble sleeping">I'm having trouble sleeping</div>
+                        <div class="suggestion-chip" data-prompt="I'm feeling overwhelmed">I'm feeling overwhelmed</div>
+                        <div class="suggestion-chip" data-prompt="Can you suggest some coping strategies?">Coping strategies</div>
+                    </div>
+                `;
+                this.chatContainer.appendChild(welcomeMessage);
+                
+                // Reattach event listeners to new suggestion chips
+                setTimeout(() => {
+                    document.querySelectorAll('.suggestion-chip').forEach(chip => {
+                        chip.addEventListener('click', () => {
+                            this.userInput.value = chip.getAttribute('data-prompt');
+                            this.sendMessage();
+                        });
+                    });
+                }, 0);
+            }
+            
+            updateChatHistory(firstMessage) {
+                // Truncate long messages for display
+                const displayText = firstMessage.length > 30 
+                    ? firstMessage.substring(0, 30) + '...' 
+                    : firstMessage;
+                
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.textContent = displayText;
+                historyItem.addEventListener('click', () => {
+                    // In a real app, this would load the chat history
+                    alert('Chat history loading would be implemented here');
+                });
+                
+                this.historyContainer.prepend(historyItem);
+            }
+        }
+        
+        // Initialize the chat when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new MentalHealthChat();
+        });
+    </script>
+</body>
+</html>
+
+E:\Project\\app.py
